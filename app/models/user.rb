@@ -1,0 +1,22 @@
+class User < ActiveRecord::Base
+  
+  has_many :locations, dependent: :delete_all
+  
+  validates :username, presence: true
+  validates :username, uniqueness: true, allow_blank: true
+  validates :username, format: { with: /\A[a-zA-Z0-9@_\-\.]*\z/, message: "can only contain letters, numbers and hyphens" }, allow_blank: true
+
+  validates :email, presence: true
+  validates :email, format: { with: /\A[A-Za-z0-9._%+-]+@[A-Za-z0-9.\-]+\z/, message: "format is not valid" }, allow_blank: true
+  
+  has_secure_password
+
+  def email_verified?
+    email.try(:strip).present? && email.try(:strip) == verified_email.try(:strip)
+  end
+  
+  def can_edit_location? location
+    id == location.user_id
+  end
+  
+end
