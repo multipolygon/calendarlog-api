@@ -22,3 +22,8 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+
+# Custom
+.DS_Store
+.secrets.env
+.web.env
