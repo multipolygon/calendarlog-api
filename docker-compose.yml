@@ -27,7 +27,6 @@ services:
       - POSTGRES_HOST=postgres
       - POSTGRES_USER=rails
       - POSTGRES_PASSWORD=rails
-      - POSTGRES_DATABASE=rails
     volumes:
       - .:/var/src:ro
       - ./Gemfile.lock:/var/src/Gemfile.lock:delegated
