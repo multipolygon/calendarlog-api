@@ -21,6 +21,8 @@ Bundler.require(*Rails.groups)
 
 module Calendarlog
   class Application < Rails::Application
+    config.middleware.use ActionDispatch::Cookies
+    
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 6.0
 
@@ -33,5 +35,8 @@ module Calendarlog
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    # config.action_dispatch.use_cookies_with_metadata = false
+    config.action_dispatch.cookies_serializer = :hybrid
   end
 end
