@@ -6,8 +6,6 @@ class LocationsController < ApplicationController
   def index
     @locations = Location.
                    not_deleted.
-                   where('last_record_at IS NOT NULL').
-                   order('RANDOM()').
                    limit(1000)
     
     @show_totals = true
@@ -19,13 +17,15 @@ class LocationsController < ApplicationController
                  elsif params[:_recent].present?
                    @show_totals = false
                    @locations.
-                     where('updated_at > ?', 2.days.ago)
+                     where('updated_at > ?', 2.days.ago).
+                     order('id')
                    
                  else
                    @locations.
-                     where('last_record_at > ?', 1.month.ago).
+                     where('last_record_at IS NOT NULL AND last_record_at > ?', 1.month.ago).
                      where('created_at < ?', 2.days.ago). ## confuse spammers by hiding brand new locations
-                     where("title IS NOT NULL AND title != ''")
+                     where("title IS NOT NULL AND title != ''").
+                     order('RANDOM()')
                  end
 
     respond_to { |format|
@@ -87,17 +87,22 @@ class LocationsController < ApplicationController
         end
       }
       format.csv {
-        require 'csv'
-        CSV.generate { |rows|
-          @location.precipitation.each_pair do |year, months|
-            months.each_pair do |month, days|
-              days.each_pair do |day, val|
-                begin
-                  rows << [Date.new(year.to_i, month.to_i, day.to_i), val]
-                rescue Date::Error
-                end
+        data = []
+        @location.precipitation.each_pair do |year, months|
+          months.each_pair do |month, days|
+            days.each_pair do |day, val|
+              begin
+                data << [Date.new(year.to_i, month.to_i, day.to_i), val]
+              rescue Date::Error
               end
             end
+          end
+        end
+        data.reverse!
+        require 'csv'
+        CSV.generate { |rows|
+          data.each do |row|
+            rows << row
           end
         }.tap { |csv|
           send_data csv, filename: "#{@location.title.parameterize}-#{Time.now.localtime.strftime('%Y-%m-%d')}.csv", type: "text/csv", disposition: "attachment"
@@ -164,9 +169,12 @@ class LocationsController < ApplicationController
 
     year_max = @location.precipitation.try(:keys).try(:sort).try(:last)
     month_max = @location.precipitation[year_max].try(:keys).try(:sort).try(:last) if year_max
-    day_max = @location.precipitation[month_max].try(:keys).try(:sort).try(:last) if month_max
+    day_max = @location.precipitation[year_max][month_max].try(:keys).try(:sort).try(:last) if month_max
 
-    @location.last_record_at = Date.new(year_max, month_max, day_max) rescue nil
+    begin
+      @location.last_record_at = Date.new(year_max.to_i, month_max.to_i, day_max.to_i)
+    rescue Date::Error
+    end
 
     if @location.save(validate: false)
       respond_to do |format|
