@@ -17,7 +17,7 @@ class LocationsController < ApplicationController
                  elsif params[:_recent].present?
                    @show_totals = false
                    @locations.
-                     where('updated_at > ?', 2.days.ago).
+                     where('updated_at > ?', 1.hour.ago).
                      order('id')
                    
                  else
@@ -98,7 +98,7 @@ class LocationsController < ApplicationController
             end
           end
         end
-        data.reverse!
+        # data.reverse!
         require 'csv'
         CSV.generate { |rows|
           data.each do |row|
