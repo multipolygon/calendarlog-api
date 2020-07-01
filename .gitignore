@@ -28,3 +28,4 @@
 .secrets.env
 .web.env
 *.sqlite3
+tmp/pids/server.pid

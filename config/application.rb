@@ -36,6 +36,28 @@ module Calendarlog
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
+    # TZ
+    config.time_zone = 'UTC'
+
+    # Logging
+    config.lograge.enabled = true
+    
+    # Email
+    config.action_mailer.default_url_options = { host: 'rainfallrecord.info', protocol: 'https' }
+    ActionMailer::Base.default from: ENV['EMAIL_USERNAME']
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.raise_delivery_errors = true
+    config.action_mailer.smtp_settings = {
+      :address        => ENV['EMAIL_SERVER_ADDRESS'],
+      :port           => ENV['EMAIL_SERVER_PORT'],
+      :authentication => :plain,
+      :user_name      => ENV['EMAIL_USERNAME'],
+      :password       => ENV['EMAIL_PASSWORD'],
+      :domain         => ENV['EMAIL_DOMAIN'],
+      :enable_starttls_auto => true,
+    }
+
+    # Cookies
     # config.action_dispatch.use_cookies_with_metadata = false
     config.action_dispatch.cookies_serializer = :hybrid
   end
