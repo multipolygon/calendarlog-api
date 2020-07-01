@@ -1,6 +1,12 @@
 version: '3'
 
 services:
+  postgres:
+    image: postgres:12
+    environment:
+      - POSTGRES_USER=rails
+      - POSTGRES_PASSWORD=rails
+
   pgloader:
     image: dimitri/pgloader
     depends_on:

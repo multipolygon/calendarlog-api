@@ -1,4 +1,7 @@
 class ConvertRecordsToJsonFields < ActiveRecord::Migration[6.0]
+  class Record < ActiveRecord::Base
+  end
+  
   def up
     Location.all.each do |location|
       puts location.id
@@ -10,7 +13,7 @@ class ConvertRecordsToJsonFields < ActiveRecord::Migration[6.0]
 
         location.public_send(
           "#{src}=",
-          location.records.where("date IS NOT NULL AND #{src} IS NOT NULL").order('date DESC').pluck(:date, src).reduce(years) do |obj, item|
+          Record.where(location_id: location.id).where("date IS NOT NULL AND #{src} IS NOT NULL").order('date DESC').pluck(:date, src).reduce(years) do |obj, item|
             date, measurement = item
             obj[date.year][date.month][date.day] = measurement
             obj
