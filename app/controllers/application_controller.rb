@@ -139,7 +139,8 @@ class ApplicationController < ActionController::Base
   def current_user_cookie_options
     {
       domain: ['.' + URI.parse(request.original_url).host.split('.')[-2..-1].join('.')],
-      secure: Rails.env.production?,
+      # secure: Rails.env.production?,
+      secure: false, # unfortunately this must be disabled for free Heroku with no SSL
       httponly: false,
       expires: 10.years.from_now,
     }
