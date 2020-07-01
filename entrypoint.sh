@@ -7,15 +7,18 @@ echo $BUNDLE_PATH
 echo $BUNDLE_WITHOUT
 bundle install
 
-# bundle exec rails generate migration AddFeedbackToUsers feedback_rating:integer feedback_text:text
-# bundle exec rails generate migration RenameRecordMeasurementToPrecipitation
-# bundle exec rails generate migration AddTemperatureToRecords temperature_min:float temperature_max:float
-
 # echo "Create database"
 # bundle exec rails db:create
 
+# bundle exec rails generate migration AddFeedbackToUsers feedback_rating:integer feedback_text:text
+# bundle exec rails generate migration RenameRecordMeasurementToPrecipitation
+# bundle exec rails generate migration AddTemperatureToRecords temperature_min:float temperature_max:float
+# bundle exec rails generate migration AddJsonFieldsToLocations precipitation:text temperature_min:text temperature_max:text
+# bundle exec rails generate migration ConvertRecordsToJsonFields
+# bundle exec rails generate migration DropRecordsTable
+
 # echo "Database migrations..."
-# bundle exec rake db:migrate
+bundle exec rake db:migrate
 
 if [ "$RAILS_ENV" = "production" ]; then
    echo "Compiling assets..."

@@ -18,11 +18,17 @@ xml.rss schema do
     xml.title @location.title
     xml.link link = request.original_url
     xml.description @feed ? @feed.description : "Unified and curated feed."
-    @location.records.order('date DESC').pluck(:date, :precipitation).each do |date, precipitation|
-      xml.item do
-        xml.pubDate date.rfc822
-        xml.guid({:isPermaLink => "false"}, date.rfc822)
-        xml.description precipitation
+    @location.precipitation.each_pair do |year, months|
+      months.each_pair do |month, days|
+        days.each_pair do |day, val|
+          begin
+            xml.item do
+              xml.pubDate DateTime.new(year.to_i, month.to_i, day.to_i).rfc822
+              xml.description val
+            end
+          rescue Date::Error
+          end
+        end
       end
     end
   end

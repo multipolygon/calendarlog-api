@@ -1,5 +1,5 @@
 class LocationsController < ApplicationController
-  # before_action :login_required
+  before_action :login_required, except: [:index, :show] # TODO
   before_action :find, except: [:index, :new, :create]
   before_action :admin_required, only: [:userlogin]
 
@@ -27,8 +27,6 @@ class LocationsController < ApplicationController
                      where('created_at < ?', 2.days.ago). ## confuse spammers by hiding brand new locations
                      where("title IS NOT NULL AND title != ''")
                  end
-
-    expires_in 24.hours, public: true
 
     respond_to { |format|
       format.html
@@ -91,9 +89,16 @@ class LocationsController < ApplicationController
       format.csv {
         require 'csv'
         CSV.generate { |rows|
-          @location.records.order('date DESC').pluck(:date, :precipitation).each { |i|
-            rows << i
-          }
+          @location.precipitation.each_pair do |year, months|
+            months.each_pair do |month, days|
+              days.each_pair do |day, val|
+                begin
+                  rows << [Date.new(year.to_i, month.to_i, day.to_i), val]
+                rescue Date::Error
+                end
+              end
+            end
+          end
         }.tap { |csv|
           send_data csv, filename: "#{@location.title.parameterize}-#{Time.now.localtime.strftime('%Y-%m-%d')}.csv", type: "text/csv", disposition: "attachment"
         }
@@ -137,42 +142,39 @@ class LocationsController < ApplicationController
       return
     end
 
-    record = Record.new record_params
-    record.location = @location
+    date = Date.parse(record_params[:date])
+    year = date.year.to_s
+    month = date.month.to_s
+    day = date.day.to_s
 
-    if record.valid?
-      @location.records.where(date: record.date).delete_all
+    [:precipitation, :temperature_min, :temperature_max].each do |prop|
+      if record_params.has_key? prop
+        if record_params[prop].present?
+          @location.public_send("#{prop}=", {}) if @location.public_send(prop).nil?
+          @location.public_send(prop)[year] = {} if @location.public_send(prop)[year].nil?
+          @location.public_send(prop)[year][month] = {} if @location.public_send(prop)[year][month].nil?
+          @location.public_send(prop)[year][month][day] = record_params[prop].to_f
+        else
+          @location.public_send(prop).try(:[], year).try(:[], month).try(:delete, day)
+          @location.public_send(prop)[year].delete(month) if @location.public_send(prop).try(:[], year).try(:[], month).try(:empty?)
+          @location.public_send(prop).delete(year) if @location.public_send(prop).try(:[], year).try(:empty?)
+        end
+      end
     end
 
-    if record.save
-      @location.last_record_at = record.date if not(record.precipitation.nil?) && (@location.last_record_at.nil? || record.date > @location.last_record_at)
-      @location.updated_at = Time.now
-      @location.save(validate: false)
-      
+    year_max = @location.precipitation.try(:keys).try(:sort).try(:last)
+    month_max = @location.precipitation[year_max].try(:keys).try(:sort).try(:last) if year_max
+    day_max = @location.precipitation[month_max].try(:keys).try(:sort).try(:last) if month_max
+
+    @location.last_record_at = Date.new(year_max, month_max, day_max) rescue nil
+
+    if @location.save(validate: false)
       respond_to do |format|
         format.html do
           render head: :ok
         end
         format.json do
           render json: { success: true }, status: :ok
-        end
-        format.js do
-          js = ''
-          next_day = record.date + 1.day
-          if params[:current_year].present? && params[:current_year].to_i != next_day.year
-            js << "window.location.replace('#{location_url(@location, year: next_day.year, month: next_day.month, day: next_day.day)}');"
-          else
-            js << "$('##{record.date.strftime('%Y-%m-%d')}').text('#{record.precipitation.try(:round, 1).to_s.gsub('.0', '')}');"
-            js << "$('##{record.date.strftime('total-%Y-%m')}').text('#{@location.total_month(record.date.year, record.date.month)}');"
-            js << "$('.#{record.date.strftime('total-year-%Y')}').text('#{@location.total_year(record.date.year)}');"
-            if next_day
-              js << "selectDate(#{next_day.year}, #{next_day.month}, #{next_day.day}, '');"
-              js << "$('##{next_day.strftime('%Y-%m-%d')}').addClass('active');"
-            end
-            js << "updateGraph();"
-            js << "updateAllYearsGraph();"
-          end
-          render js: js
         end
       end
 
@@ -183,9 +185,6 @@ class LocationsController < ApplicationController
         end
         format.json do
           render json: { errors: record.errors.full_messages }, status: :unprocessable_entity
-        end
-        format.js do
-          render js: "alert('#{record.errors.full_messages.join(', ')}');"
         end
       end
     end
@@ -249,6 +248,6 @@ class LocationsController < ApplicationController
   end
 
   def record_params
-    params.require(:record).permit(:date, :precipitation, :temperature_min, :temperature_max)
+    @record_params ||= params.require(:record).permit(:date, :precipitation, :temperature_min, :temperature_max)
   end
 end
