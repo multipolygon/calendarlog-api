@@ -1,5 +1,5 @@
 class LocationsController < ApplicationController
-  before_action :login_required, except: [:index, :show] # TODO
+  before_action :login_required
   before_action :find, except: [:index, :new, :create]
   before_action :admin_required, only: [:userlogin]
 
