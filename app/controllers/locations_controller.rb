@@ -29,7 +29,6 @@ class LocationsController < ApplicationController
                  end
 
     respond_to { |format|
-      format.html
       format.json
       format.text { render plain: @locations.pluck(:id).map{|id| "%08d" % id}.join("\n") }
     }
@@ -48,14 +47,6 @@ class LocationsController < ApplicationController
     saved = @location.save
 
     respond_to do |format|
-      format.html do
-        if saved
-          flash[:success] = 'Saved'
-          redirect_to location_url(@location)
-        else
-          render 'new'
-        end
-      end
       format.json do
         if saved
           render json: { id: @location.id }
@@ -78,9 +69,6 @@ class LocationsController < ApplicationController
     @current_date = DateTime.new(@current_year, @current_month, @current_day).to_date
 
     respond_to { |format|
-      format.html {
-        @records_hash = @location.records_hash @current_year
-      }
       format.json {
         if params[:download].present?
           response.header['Content-Disposition'] = "attachment; filename=\"#{@location.title.parameterize}-#{Time.now.localtime.strftime('%Y-%m-%d')}.json\""
@@ -122,14 +110,6 @@ class LocationsController < ApplicationController
       saved = @location.save
 
       respond_to do |format|
-        format.html do
-          if saved
-            flash[:success] = 'Saved'
-            redirect_to location_url(@location)
-          else
-            render 'edit'
-          end
-        end
         format.json do
           if saved
             render json: { id: @location.id }
@@ -178,9 +158,6 @@ class LocationsController < ApplicationController
 
     if @location.save(validate: false)
       respond_to do |format|
-        format.html do
-          render head: :ok
-        end
         format.json do
           render json: { success: true }, status: :ok
         end
@@ -188,9 +165,6 @@ class LocationsController < ApplicationController
 
     else ## not saved
       respond_to do |format|
-        format.html do
-          render head: :unprocessable_entity
-        end
         format.json do
           render json: { errors: record.errors.full_messages }, status: :unprocessable_entity
         end
@@ -208,18 +182,12 @@ class LocationsController < ApplicationController
       @location.update_column :deleted_at, Time.now
 
       respond_to do |format|
-        format.html do
-          redirect_to user_url
-        end
         format.json do
           render json: {}
         end
       end
     else
       respond_to do |format|
-        format.html do
-          redirect_to location_url(@location)
-        end
         format.json do
           render json: {}, status: :unprocessable_entity
         end
@@ -231,13 +199,11 @@ class LocationsController < ApplicationController
     if current_user.can_edit_location?(@location) || current_user.admin
       @location.deleted_at = nil
 
-      if @location.save
-        flash[:success] = "Location \"#{@location.title}\" restored."
-      else
-        flash[:error] = "Location could not be restored!"
+      respond_to do |format|
+        format.json do
+          render json: {}
+        end
       end
-
-      redirect_to location_url(@location)
     end
   end
 

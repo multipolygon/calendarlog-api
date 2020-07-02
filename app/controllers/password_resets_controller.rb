@@ -21,15 +21,6 @@ class PasswordResetsController < ApplicationController
     end
 
     respond_to do |format|
-      format.html do
-        if current_user.present?
-          flash[:success] = "Email sent to #{current_user.email}"
-          redirect_to user_url
-        else
-          flash[:success] = "If the email address was found in our database, you will receive an email soon."
-          redirect_to site_login_url
-        end
-      end
       format.json do
         render json: {}
       end
@@ -41,15 +32,11 @@ class PasswordResetsController < ApplicationController
     begin
       data =  message_verifier.verify(params[:signature])
     rescue ActiveSupport::MessageVerifier::InvalidSignature
-      flash[:error] = 'Sorry, this verification URL has expired.'
       redirect_to site_login_url
     else
       @user.verification_token = ""
       if data.include?(:email) && data[:email] == @user.email && @user.verified_email != @user.email
         @user.verified_email = @user.email
-        flash[:success] = "Email successfully verified"
-      else
-        flash[:success] = "Logged in"
       end
       @user.save(validate: false)
       set_current_user_cookie @user.id

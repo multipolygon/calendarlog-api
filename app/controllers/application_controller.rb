@@ -110,9 +110,6 @@ class ApplicationController < ActionController::Base
 
   def not_authorised
     respond_to do |format|
-      format.html do
-        redirect_to site_login_url
-      end
       format.json do
         render json: {}, status: 403
       end

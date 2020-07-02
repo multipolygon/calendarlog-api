@@ -1,5 +1,4 @@
 class SiteController < ApplicationController
-  skip_before_action :html_redirect, only: [:feedback]
   before_action :admin_required, only: [:feedback]
 
   def home
@@ -61,9 +60,6 @@ class SiteController < ApplicationController
     end
     
     respond_to do |format|
-      format.html do
-        redirect_to site_login_url
-      end
       format.json do
         render json: {}
       end
@@ -78,8 +74,23 @@ class SiteController < ApplicationController
     @users = User.all.order('updated_at DESC').limit(1000)
     @locations = Location.where(user_id: @users.pluck(:id)).select(:id, :user_id).group_by{|i| i.user_id}
     respond_to do |format|
-      format.html do
-        render layout: nil
+      format.csv do
+        require 'csv'
+        CSV.generate { |rows|
+          rows << %w(Updated Created Username Locations Rating Comment)
+          @users.each { |user|
+            rows << [
+              user.updated_at.strftime('%Y-%m'),
+              user.created_at.strftime('%Y-%m'),
+              user.username,
+              (@locations[user.id] || []).map{ |i| i.id }.join(' '),
+              user.feedback_rating,
+              user.feedback_text,
+            ]
+          }
+        }.tap { |csv|
+          send_data csv, filename: "feedback-#{Time.now.localtime.strftime('%Y-%m-%d')}.csv", type: "text/csv", disposition: "attachment"
+        }
       end
     end
   end

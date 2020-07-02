@@ -9,14 +9,6 @@ class UsersController < ApplicationController
     end
 
     respond_to do |format|
-      format.html do
-        if saved
-          flash[:success] = 'Success'
-          redirect_to new_location_url
-        else
-          render 'site/login'
-        end
-      end
       format.json do
         if saved
           render json: { id: @user.id }
@@ -42,14 +34,6 @@ class UsersController < ApplicationController
     saved = @user.save
 
     respond_to do |format|
-      format.html do
-        if saved
-          flash[:success] = 'Saved'
-          redirect_to user_url
-        else
-          render 'edit'
-        end
-      end
       format.json do
         if saved
           render json: { }
