@@ -35,15 +35,19 @@ class ApplicationController < ActionController::Base
   def html_redirect
     if ENV['LEGACY_URL'].present? && ENV['V3_API_URL'].present? && ENV['V3_APP_URL'].present? && request.host == ENV['LEGACY_URL']
       if logged_in?
-        redirect_to "#{request.protocol}#{ENV['V3_API_URL']}/app_login.json?#{v3_app_params}", status: 307
+        redirect_to "https://#{ENV['V3_API_URL']}/app_login.json?#{v3_app_params}", status: 307
       else
-        redirect_to "https://#{ENV['V3_APP_URL']}#{v3_app_path}", status: 301
+        redirect_to "https://#{ENV['V3_APP_URL']}#{v3_app_path}", status: 301 # permanent
       end
       return false
     end
 
     if request.format == 'html'
-      render plain: 'Not found', status: 404
+      if ENV['V3_APP_URL'].present?
+        redirect_to "https://#{ENV['V3_APP_URL']}", status: 307
+      else
+        render plain: 'Not found', status: 404
+      end
       return false
     end
     
@@ -134,13 +138,12 @@ class ApplicationController < ActionController::Base
       not_authorised
     end
   end
-
     
   def current_user_cookie_options
     {
       domain: ['.' + URI.parse(request.original_url).host.split('.')[-2..-1].join('.')],
       # secure: Rails.env.production?,
-      secure: false, # unfortunately this must be disabled for free Heroku with no SSL
+      secure: false, # Unfortunately this must be disabled for free Heroku with no SSL
       httponly: false,
       expires: 10.years.from_now,
     }

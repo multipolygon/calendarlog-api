@@ -1,5 +1,6 @@
 class PasswordResetsController < ApplicationController
   require 'securerandom'
+  skip_before_action :html_redirect, only: [:edit]
 
   def new
   end
@@ -40,7 +41,7 @@ class PasswordResetsController < ApplicationController
     begin
       data =  message_verifier.verify(params[:signature])
     rescue ActiveSupport::MessageVerifier::InvalidSignature
-      flash[:error] = 'Sorry, this verification URL appears to have expired.'
+      flash[:error] = 'Sorry, this verification URL has expired.'
       redirect_to site_login_url
     else
       @user.verification_token = ""
@@ -52,7 +53,11 @@ class PasswordResetsController < ApplicationController
       end
       @user.save(validate: false)
       set_current_user_cookie @user.id
-      redirect_to user_url
+      if ENV['V3_APP_URL'].present?
+        redirect_to "https://#{ENV['V3_APP_URL']}/user"
+      else
+        redirect_to user_url
+      end
     end
   end
 
