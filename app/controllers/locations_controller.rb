@@ -17,7 +17,7 @@ class LocationsController < ApplicationController
                  elsif params[:_recent].present?
                    @show_totals = false
                    @locations.
-                     where('updated_at > ?', 1.hour.ago).
+                     where('updated_at >= ?', 25.hours.ago).
                      order('id')
                    
                  else
