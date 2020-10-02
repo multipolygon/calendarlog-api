@@ -1,24 +1,5 @@
-# README
+# Rainfall Record / Calendarlog API
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+A simple Rails 6 API-only project.
 
-Things you may want to cover:
-
-* Ruby version
-
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+Note, it only has one table with `jsonb` fields to get around Heroku's row limit on the free plan.
