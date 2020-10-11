@@ -14,9 +14,11 @@ json.features(@locations) do |item|
   end
   json.properties do
     json.id item.id
-    json.title item.title
+    json.title item.title.presence || 'No title'
     json.location [item.town_suburb.try(:titlecase), item.region].reject(&:blank?).compact.join(', ')
-    if @show_totals
+    json.updated_at item.updated_at
+    json.last_record_at item.last_record_at
+    if @show_totals && item.last_record_at >= 30.days.ago
       json.total_7_days item.total_7_days
       json.total_30_days item.total_30_days
     end

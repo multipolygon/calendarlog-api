@@ -6,31 +6,60 @@ class LocationsController < ApplicationController
   def index
     @locations = Location.
                    not_deleted.
-                   limit(1000)
-    
+                   limit(5000)
+
     @show_totals = true
-    
+
+    recent = 45.hours.ago
+
     @locations = if params[:_all].present?
                    @show_totals = false
-                   @locations
-                   
+                   @locations.
+                     order(updated_at: :desc)
+
                  elsif params[:_recent].present?
                    @show_totals = false
                    @locations.
-                     where('updated_at >= ?', 25.hours.ago).
-                     order('id')
-                   
+                     where('updated_at >= ?', recent).
+                     order(updated_at: :desc)
+
+                 elsif params[:_recent_records].present?
+                   @locations.
+                     where('last_record_at IS NOT NULL AND last_record_at > ?', recent).
+                     order(last_record_at: :desc)
+
                  else
                    @locations.
-                     where('last_record_at IS NOT NULL AND last_record_at > ?', 1.month.ago).
-                     where('created_at < ?', 2.days.ago). ## confuse spammers by hiding brand new locations
-                     where("title IS NOT NULL AND title != ''").
+                     where('updated_at >= ?', 9.months.ago).
+                     where('created_at < ?', 2.days.ago). # hide new, empty records
+                     where('last_record_at IS NOT NULL').
                      order('RANDOM()')
                  end
 
     respond_to { |format|
       format.json
       format.text { render plain: @locations.pluck(:id).map{|id| "%08d" % id}.join("\n") }
+      format.csv {
+        require 'csv'
+        CSV.generate { |rows|
+          rows << %w(id username email updated_at last_record_at total_7_days total_30_days)
+          if current_user && current_user.admin
+            @locations.each { |i|
+              rows << [
+                i.id,
+                i.user.username,
+                i.user.email,
+                i.updated_at,
+                i.last_record_at,
+                i.total_7_days,
+                i.total_30_days,
+              ]
+            }
+          end
+        }.tap { |csv|
+          send_data csv, type: "text/csv"
+        }
+      }
     }
   end
 
@@ -54,7 +83,7 @@ class LocationsController < ApplicationController
           render json: { errors: @location.errors }, status: :unprocessable_entity
         end
       end
-    end    
+    end
   end
 
   def show
@@ -62,7 +91,7 @@ class LocationsController < ApplicationController
       expires_in 24.hours, public: true
       fresh_when etag: @location, last_modified: @location.updated_at, public: true
     end
-    
+
     @current_year = params[:year].present? ? params[:year].to_i : Time.now.localtime.year
     @current_month = params[:month].present? ? params[:month].to_i : Time.now.localtime.month
     @current_day = params[:day].present? ? params[:day].to_i : Time.now.localtime.day
@@ -117,7 +146,7 @@ class LocationsController < ApplicationController
             render json: { errors: @location.errors }, status: :unprocessable_entity
           end
         end
-      end    
+      end
     end
   end
 
@@ -144,16 +173,10 @@ class LocationsController < ApplicationController
           @location.public_send(prop)[year].delete(month) if @location.public_send(prop).try(:[], year).try(:[], month).try(:empty?)
           @location.public_send(prop).delete(year) if @location.public_send(prop).try(:[], year).try(:empty?)
         end
+        if prop === :precipitation
+          @location.last_record_at = @location.get_precipitation_last_record_date
+        end
       end
-    end
-
-    year_max = @location.precipitation.try(:keys).try(:sort).try(:last)
-    month_max = @location.precipitation[year_max].try(:keys).try(:sort).try(:last) if year_max
-    day_max = @location.precipitation[year_max][month_max].try(:keys).try(:sort).try(:last) if month_max
-
-    begin
-      @location.last_record_at = Date.new(year_max.to_i, month_max.to_i, day_max.to_i)
-    rescue Date::Error
     end
 
     if @location.save(validate: false)
