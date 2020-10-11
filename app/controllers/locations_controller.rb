@@ -30,10 +30,9 @@ class LocationsController < ApplicationController
 
                  else
                    @locations.
-                     where('updated_at >= ?', 9.months.ago).
+                     where('last_record_at IS NOT NULL AND last_record_at > ?', 9.months.ago).
                      where('created_at < ?', 2.days.ago). # hide new, empty records
-                     where('last_record_at IS NOT NULL').
-                     order('RANDOM()')
+                     order("date_trunc('month', last_record_at) DESC, RANDOM()")
                  end
 
     respond_to { |format|

@@ -53,14 +53,14 @@ class Location < ActiveRecord::Base
   end
 
   def get_precipitation_last_record_date
-    year_max = precipitation.try(:keys).try(:sort).try(:last)
+    year_max = precipitation.try(:keys).try(:map, &:to_i).try(:sort).try(:last)
     if year_max
-      month_max = precipitation[year_max].try(:keys).try(:sort).try(:last)
+      month_max = precipitation[year_max.to_s].try(:keys).try(:map, &:to_i).try(:sort).try(:last)
       if month_max
-        day_max = precipitation[year_max][month_max].try(:keys).try(:sort).try(:last)
+        day_max = precipitation[year_max.to_s][month_max.to_s].try(:keys).try(:map, &:to_i).try(:sort).try(:last)
         if day_max
           begin
-            return Date.new(year_max.to_i, month_max.to_i, day_max.to_i)
+            return Date.new(year_max, month_max, day_max)
           rescue Date::Error
           end
         end
