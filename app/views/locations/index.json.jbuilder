@@ -6,7 +6,7 @@ json.features(@locations) do |item|
     json.type "Point"
     json.coordinates(
       if item.latitude.nil? || item.longitude.nil?
-        [133.333, -26.974]
+        [0.0, 0.0]
       else
         [item.longitude.round(3), item.latitude.round(3)]
       end

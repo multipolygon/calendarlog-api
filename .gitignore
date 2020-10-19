@@ -29,3 +29,4 @@
 .web.env
 *.sqlite3
 tmp/pids/server.pid
+db/latest.dump

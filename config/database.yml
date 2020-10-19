@@ -9,7 +9,7 @@ default: &default
 
 development:
   <<: *default
-  database: calendarlog_development
+  database: dckhri970jog8
 
 test:
   <<: *default
