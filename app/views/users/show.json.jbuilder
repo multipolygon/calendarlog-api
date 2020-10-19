@@ -8,7 +8,12 @@ json.api_key current_user_api_key
 json.locations(current_user.try(:locations).try(:not_deleted) || []) do |item|
   json.id item.id
   json.title item.title
-  json.location [item.town_suburb.try(:titlecase), item.region, item.country].reject(&:blank?).compact.join(', ')
+  json.location(
+    [
+      item.town_suburb.try(:capitalize),
+      item.country.try(:capitalize)
+    ].reject(&:blank?).compact.join(', ')
+  )
   json.total_7_days item.total_7_days
   json.total_30_days item.total_30_days
 end

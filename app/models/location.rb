@@ -7,11 +7,11 @@ class Location < ActiveRecord::Base
 
   validates :street_address, length: { maximum: 255 }
 
-  validates :town_suburb, length: { maximum: 255 }, presence: true
+  validates :town_suburb, length: { maximum: 255 }
 
   validates :post_code, length: { maximum: 255 }
 
-  validates :region, length: { maximum: 255 }, presence: true
+  validates :region, length: { maximum: 255 }
 
   validates :country, length: { maximum: 255 }, presence: true
 
