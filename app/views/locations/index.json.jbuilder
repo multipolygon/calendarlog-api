@@ -3,15 +3,25 @@ countries = JSON.parse(File.read(File.join(Rails.root, 'lib', 'countries-cities.
 json.type 'FeatureCollection'
 
 json.features(@locations) do |item|
+  if item.country.present?
+    item.country = item.country.strip
+    item.country[0] = item.country[0].capitalize
+  end
+
+  if item.town_suburb.present?
+    item.town_suburb = item.town_suburb.strip
+    item.town_suburb[0] = item.town_suburb[0].capitalize
+  end
+
   json.type 'Feature'
   json.geometry do
     json.type "Point"
     json.coordinates(
       if item.latitude.nil? || item.longitude.nil?
-        if item.country.present? && countries.include?(item.country.capitalize)
-          country = countries[item.country.capitalize]
-          if item.town_suburb.present? && country['ct'].include?(item.town_suburb.capitalize)
-            country['ct'][item.town_suburb.capitalize]
+        if item.country.present? && countries.include?(item.country.titleize)
+          country = countries[item.country.titleize]
+          if item.town_suburb.present? && country['ct'].include?(item.town_suburb.titleize)
+            country['ct'][item.town_suburb.titleize]
           else
             country['co']
           end
@@ -27,8 +37,8 @@ json.features(@locations) do |item|
     json.id item.id
     json.location(
       [
-        item.town_suburb.try(:capitalize),
-        item.country.try(:capitalize)
+        item.town_suburb,
+        item.country,
       ].reject(&:blank?).compact.join(', ')
     )
     json.updated_at item.updated_at
