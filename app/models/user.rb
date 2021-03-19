@@ -1,4 +1,6 @@
 class User < ActiveRecord::Base
+  EMAIL_REGEXP = /\A[A-Za-z0-9._%+-]+@[A-Za-z0-9.\-]+\z/
+
   has_many :locations, dependent: :delete_all
   
   validates :username, presence: true
@@ -6,7 +8,7 @@ class User < ActiveRecord::Base
   validates :username, format: { with: /\A[a-z0-9]*\z/, message: "can only contain lowercase letters and numbers" }, allow_blank: true
 
   validates :email, presence: true
-  validates :email, format: { with: /\A[A-Za-z0-9._%+-]+@[A-Za-z0-9.\-]+\z/, message: "format is not valid" }, allow_blank: true
+  validates :email, format: { with: EMAIL_REGEXP, message: "format is not valid" }, allow_blank: true
   
   has_secure_password
 
