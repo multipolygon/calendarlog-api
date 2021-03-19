@@ -11,7 +11,7 @@ class PasswordResetsController < ApplicationController
       User.where("email ILIKE ?", email).each do |user|
         user.verification_token = SecureRandom.base64(16)
         user.save(validate: false)
-        signature = message_verifier.generate({ email: user.email })
+        signature = message_verifier(user).generate({ email: user.email })
         verification_url = edit_password_reset_url(user.id, signature: signature)
         UserMailer.reset_password_email(user, verification_url).deliver
       end
@@ -27,7 +27,7 @@ class PasswordResetsController < ApplicationController
   def edit
     @user = User.find(params[:id])
     begin
-      data =  message_verifier.verify(params[:signature])
+      data =  message_verifier(@user).verify(params[:signature])
     rescue ActiveSupport::MessageVerifier::InvalidSignature
       redirect_to site_login_url
     else
@@ -47,7 +47,7 @@ class PasswordResetsController < ApplicationController
 
   private
 
-  def message_verifier
-    @verifier ||= ActiveSupport::MessageVerifier.new('928y3hjasdf' + @user.verification_token + ENV["SECRET_KEY_BASE"])
+  def message_verifier user
+    ActiveSupport::MessageVerifier.new('928y3hjasdf' + user.verification_token + ENV["SECRET_KEY_BASE"])
   end
 end
