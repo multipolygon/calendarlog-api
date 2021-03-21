@@ -38,10 +38,7 @@ module Calendarlog
 
     # TZ
     config.time_zone = 'UTC'
-
-    # Logging
-    config.lograge.enabled = true
-    
+        
     # Email
     config.action_mailer.default_url_options = { host: 'rainfallrecord.info', protocol: 'https' }
     ActionMailer::Base.default from: ENV['EMAIL_USERNAME']
