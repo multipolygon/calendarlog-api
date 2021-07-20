@@ -8,7 +8,7 @@ class PasswordResetsController < ApplicationController
   def create
     email = params[:email]&.chomp&.strip
 
-    const users = if email.present? && email =~ User::EMAIL_REGEXP
+    users = if email.present? && email =~ User::EMAIL_REGEXP
       User.where("LOWER(email) = LOWER(?)", email)
     elsif current_user.present?
       [current_user]
