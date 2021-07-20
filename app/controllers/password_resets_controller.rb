@@ -6,15 +6,22 @@ class PasswordResetsController < ApplicationController
   end
 
   def create
-    email = params[:email].chomp.strip
-    if email =~ User::EMAIL_REGEXP
-      User.where("email ILIKE ?", email).each do |user|
-        user.verification_token = SecureRandom.base64(16)
-        user.save(validate: false)
-        signature = message_verifier(user).generate({ email: user.email })
-        verification_url = edit_password_reset_url(user.id, signature: signature)
-        UserMailer.reset_password_email(user, verification_url).deliver
-      end
+    email = params[:email]&.chomp&.strip
+
+    const users = if email.present? && email =~ User::EMAIL_REGEXP
+      User.where("LOWER(email) = LOWER(?)", email)
+    elsif current_user.present?
+      [current_user]
+    else 
+      []
+    end
+
+    users.each do |user|
+      user.verification_token = SecureRandom.base64(16)
+      user.save(validate: false)
+      signature = message_verifier(user).generate({ email: user.email })
+      verification_url = edit_password_reset_url(user.id, signature: signature)
+      UserMailer.reset_password_email(user, verification_url).deliver
     end
 
     respond_to do |format|
